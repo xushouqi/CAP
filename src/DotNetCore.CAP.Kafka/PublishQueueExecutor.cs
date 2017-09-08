@@ -23,7 +23,7 @@ namespace DotNetCore.CAP.Kafka
             _kafkaOptions = kafkaOptions;
         }
 
-        public override Task<OperateResult> PublishAsync(string keyName, string content)
+        public override Task<OperateResult> PublishAsync(string keyName, string content, bool saveToDb)
         {
             try
             {

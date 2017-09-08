@@ -16,14 +16,17 @@ namespace DotNetCore.CAP.PostgreSql
         private readonly ILogger _logger;
         private readonly PostgreSqlOptions _options;
         private readonly DbContext _dbContext;
+        private readonly IQueueExecutorFactory _queueExecutorFactory;
 
         public CapPublisher(IServiceProvider provider,
             ILogger<CapPublisher> logger,
+               IQueueExecutorFactory queueExecutorFactory,
             PostgreSqlOptions options)
         {
             ServiceProvider = provider;
             _options = options;
             _logger = logger;
+            _queueExecutorFactory = queueExecutorFactory;
 
             if (_options.DbContextType != null)
             {
@@ -64,9 +67,18 @@ namespace DotNetCore.CAP.PostgreSql
 
         public async Task PublishAsync(CapPublishedMessage message)
         {
-            using (var conn = new NpgsqlConnection(_options.ConnectionString))
+            if (message.SaveToDb)
             {
-                await conn.ExecuteAsync(PrepareSql(), message);
+                using (var conn = new NpgsqlConnection(_options.ConnectionString))
+                {
+                    await conn.ExecuteAsync(PrepareSql(), message);
+                }
+            }
+            else
+            {
+                //xu: 直接发送
+                var queueExecutor = _queueExecutorFactory.GetInstance(MessageType.Publish);
+                await queueExecutor.PublishAsync(message.Name, message.Content, false);
             }
         }
 

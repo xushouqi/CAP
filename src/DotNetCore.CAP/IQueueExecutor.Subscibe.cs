@@ -89,7 +89,7 @@ namespace DotNetCore.CAP
             }
         }
 
-        protected virtual async Task<OperateResult> ExecuteSubscribeAsync(CapReceivedMessage receivedMessage)
+        public virtual async Task<OperateResult> ExecuteSubscribeAsync(CapReceivedMessage receivedMessage)
         {
             try
             {
@@ -118,6 +118,10 @@ namespace DotNetCore.CAP
                 _logger.ConsumerMethodExecutingFailed($"Group:{receivedMessage.Group}, Topic:{receivedMessage.Name}", ex);
                 return OperateResult.Failed(ex);
             }
+        }
+        public async Task<OperateResult> PublishAsync(string keyName, string content, bool saveToDb)
+        {
+            return OperateResult.Failed();
         }
 
         private async Task<bool> UpdateMessageForRetryAsync(CapReceivedMessage message, IStorageConnection connection)

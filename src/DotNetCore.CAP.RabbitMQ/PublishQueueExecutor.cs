@@ -26,7 +26,7 @@ namespace DotNetCore.CAP.RabbitMQ
             _rabbitMQOptions = rabbitMQOptions;
         }
 
-        public override Task<OperateResult> PublishAsync(string keyName, string content)
+        public override Task<OperateResult> PublishAsync(string keyName, string content, bool saveToDb)
         {
             var connection = _connectionPool.Rent();
 
@@ -34,6 +34,7 @@ namespace DotNetCore.CAP.RabbitMQ
             {
                 using (var channel = connection.CreateModel())
                 {
+                    content = string.Concat(content, "#DB#", saveToDb ? 1 : 0);
                     var body = Encoding.UTF8.GetBytes(content);
 
                     channel.ExchangeDeclare(_rabbitMQOptions.TopicExchangeName, RabbitMQOptions.ExchangeType, durable: true);

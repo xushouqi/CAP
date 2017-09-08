@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using DotNetCore.CAP.Models;
 
 namespace DotNetCore.CAP.RabbitMQ
 {
@@ -22,14 +23,18 @@ namespace DotNetCore.CAP.RabbitMQ
 
         public event EventHandler<string> OnError;
 
+        private readonly IQueueExecutorFactory _queueExecutorFactory;
+
         public RabbitMQConsumerClient(string queueName,
              ConnectionPool connectionPool,
+               IQueueExecutorFactory queueExecutorFactory,
              RabbitMQOptions options)
         {
             _queueName = queueName;
             _connectionPool = connectionPool;
             _rabbitMQOptions = options;
             _exchageName = options.TopicExchangeName;
+            _queueExecutorFactory = queueExecutorFactory;
 
             InitClient();
         }
@@ -90,13 +95,29 @@ namespace DotNetCore.CAP.RabbitMQ
         private void OnConsumerReceived(object sender, BasicDeliverEventArgs e)
         {
             _deliveryTag = e.DeliveryTag;
+            var content = Encoding.UTF8.GetString(e.Body);
+            var saveToDb = "1";
+            int idx = content.LastIndexOf("#DB#");
+            if (idx >= 0)
+            {
+                content = content.Substring(0, idx);
+                saveToDb = content.Substring(idx + "#DB#".Length);
+            }
             var message = new MessageContext
             {
                 Group = _queueName,
                 Name = e.RoutingKey,
-                Content = Encoding.UTF8.GetString(e.Body)
+                Content = content,
             };
-            OnMessageReceieved?.Invoke(sender, message);
+            if (saveToDb.Equals("1"))
+                OnMessageReceieved?.Invoke(sender, message);
+            else
+            {
+                var receivedMessage = new CapReceivedMessage(message);
+                //xu: 直接接受派送订阅者
+                var queueExecutor = _queueExecutorFactory.GetInstance(MessageType.Subscribe);
+                queueExecutor.ExecuteSubscribeAsync(receivedMessage).Wait();
+            }
         }
 
         private void OnConsumerShutdown(object sender, ShutdownEventArgs e)

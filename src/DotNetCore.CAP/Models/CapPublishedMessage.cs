@@ -27,6 +27,9 @@ namespace DotNetCore.CAP.Models
 
         public string Content { get; set; }
 
+        //xu: 是否本地存储
+        public bool SaveToDb { get; set; } = true;
+
         public DateTime Added { get; set; }
 
         public DateTime? ExpiresAt { get; set; }

@@ -24,7 +24,7 @@ namespace DotNetCore.CAP
             _logger = logger;
         }
 
-        public abstract Task<OperateResult> PublishAsync(string keyName, string content);
+        public abstract Task<OperateResult> PublishAsync(string keyName, string content, bool saveToDb);
 
         public async Task<OperateResult> ExecuteAsync(IStorageConnection connection, IFetchedMessage fetched)
         {
@@ -38,7 +38,7 @@ namespace DotNetCore.CAP
                 {
                     _logger.JobRetrying(message.Retries);
                 }
-                var result = await PublishAsync(message.Name, message.Content);
+                var result = await PublishAsync(message.Name, message.Content, message.SaveToDb);
                 sp.Stop();
 
                 var newState = default(IState);
@@ -76,6 +76,11 @@ namespace DotNetCore.CAP
                 _logger.ExceptionOccuredWhileExecutingJob(message?.Name, ex);
                 return OperateResult.Failed(ex);
             }
+        }
+
+        public async Task<OperateResult> ExecuteSubscribeAsync(CapReceivedMessage receivedMessage)
+        {
+            return OperateResult.Failed();
         }
 
         private async Task<bool> UpdateMessageForRetryAsync(CapPublishedMessage message, IStorageConnection connection)

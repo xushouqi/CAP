@@ -1,5 +1,5 @@
-﻿using System;
-using DotNetCore.CAP.Models;
+﻿using DotNetCore.CAP.Models;
+using System;
 
 namespace DotNetCore.CAP.Processor.States
 {
