@@ -17,7 +17,8 @@ namespace DotNetCore.CAP
         public void AddServices(IServiceCollection services)
         {
             var options = new RabbitMQOptions();
-            _configure?.Invoke(options);
+            options.HostName = "1234567";
+            _configure(options);
             services.AddSingleton(options);
 
             services.AddSingleton<IConsumerClientFactory, RabbitMQConsumerClientFactory>();
